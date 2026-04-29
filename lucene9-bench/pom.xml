@@ -53,6 +53,15 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.example.lucenebench.l9.Lucene9Benchmark</mainClass>
+                                    <manifestEntries>
+                                        <!-- Lucene 9.x ships Java 19/20/21 versioned
+                                             MemorySegmentIndexInput classes under
+                                             META-INF/versions/. Without this
+                                             attribute the JVM ignores them and
+                                             MMapDirectory fails to initialize on
+                                             Java 19+. -->
+                                        <Multi-Release>true</Multi-Release>
+                                    </manifestEntries>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>

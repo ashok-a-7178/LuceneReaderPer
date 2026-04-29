@@ -304,6 +304,25 @@ public final class Lucene4Benchmark {
             printSection(r.search);
             printSection(r.readerClose);
         }
+        // Machine-parseable lines so parent processes (e.g. the matrix launcher)
+        // can aggregate results across JDK installations.
+        emitMachine(r, "writer.open", r.writerOpen);
+        emitMachine(r, "indexing", r.indexing);
+        emitMachine(r, "writer.close", r.writerClose);
+        if (searched) {
+            emitMachine(r, "reader.open", r.readerOpen);
+            emitMachine(r, "search", r.search);
+            emitMachine(r, "reader.close", r.readerClose);
+        }
+    }
+
+    private static void emitMachine(Result r, String section, BenchmarkStats s) {
+        BenchmarkStats.Summary sum = s.summarize();
+        if (sum.count == 0) return;
+        System.out.printf(Locale.ROOT,
+                "BENCH-RESULT lucene=4.10.4 java=%s dir=%s section=%s n=%d avgMs=%.4f p95Ms=%.4f p99Ms=%.4f maxMs=%.4f totalMs=%.4f%n",
+                System.getProperty("java.version"), r.name, section, sum.count,
+                sum.avgMs(), sum.p95Ms(), sum.p99Ms(), sum.maxMs(), sum.totalMs());
     }
 
     private static void printSection(BenchmarkStats s) {
