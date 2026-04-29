@@ -37,6 +37,8 @@ echo " mvn:  $(command -v mvn)"
 mvn -v | head -1
 
 # ---- 2. Build only when needed -------------------------------------------
+# If all three jars exist we skip the build for a fast restart. Run
+# `mvn clean` to force a rebuild after editing sources.
 LAUNCHER_JAR="launcher/target/launcher.jar"
 LUCENE4_JAR="lucene4-bench/target/lucene4-bench.jar"
 LUCENE9_JAR="lucene9-bench/target/lucene9-bench.jar"
@@ -48,16 +50,6 @@ for jar in "$LAUNCHER_JAR" "$LUCENE4_JAR" "$LUCENE9_JAR"; do
     break
   fi
 done
-if [ $needs_build -eq 0 ]; then
-  # Rebuild if any source file is newer than the oldest jar.
-  newest_src="$(find launcher/src lucene4-bench/src lucene9-bench/src pom.xml \
-      */pom.xml -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1 || echo 0)"
-  oldest_jar="$(stat -c '%Y' "$LAUNCHER_JAR" "$LUCENE4_JAR" "$LUCENE9_JAR" \
-      2>/dev/null | sort -n | head -1 || echo 0)"
-  if [ "${newest_src%.*}" -gt "${oldest_jar%.*}" ]; then
-    needs_build=1
-  fi
-fi
 
 if [ $needs_build -eq 1 ]; then
   echo
@@ -65,7 +57,8 @@ if [ $needs_build -eq 1 ]; then
   mvn -q -DskipTests package
 else
   echo
-  echo " Build artifacts are up to date — skipping build."
+  echo " Build artifacts are present — skipping build."
+  echo " (run 'mvn clean' to force a rebuild after editing sources)"
 fi
 
 # ---- 3. Launch the benchmark using the current JVM -----------------------
