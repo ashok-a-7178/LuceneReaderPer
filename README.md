@@ -4,6 +4,14 @@ Concurrent benchmark comparing `NIOFSDirectory` and `MMapDirectory` under highly
 concurrent indexing and searching, runnable on **Lucene 4.10.4**, **Lucene
 9.10.0**, or **both** — selected interactively from the console.
 
+> **Just want to run it?** See **[RUNNING.md](RUNNING.md)** — three commands,
+> uses your active JDK, no JDK matrix needed.
+>
+> ```bash
+> ./run.sh           # Linux / macOS
+> run.bat            # Windows
+> ```
+
 ## Why a multi-module project?
 
 Lucene 4 and Lucene 9 share the `org.apache.lucene` package namespace and have
