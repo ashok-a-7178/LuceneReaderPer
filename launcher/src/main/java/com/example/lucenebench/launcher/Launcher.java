@@ -337,6 +337,44 @@ public final class Launcher {
             row.append(String.format(Locale.ROOT, " %12s", winner == null ? "-" : winner));
             System.out.println(row);
         }
+        // -------- direct NIOFS vs MMap verdict per (Lucene version × JDK) --------
+        // For each (lucene, jdk) pair, compare NIOFSDirectory vs MMapDirectory
+        // for the two sections users actually care about: indexing and search.
+        // The winner column shows which directory is faster at concurrent
+        // index / search on that JVM, with the magnitude of the speed-up.
+        System.out.println();
+        System.out.println("================================================================");
+        System.out.println(" NIOFSDirectory vs MMapDirectory verdict (concurrent index + search)");
+        System.out.println("================================================================");
+        System.out.printf(Locale.ROOT, "%-9s %-8s %-9s %12s %12s %-10s %8s%n",
+                "lucene", "jdk", "section", "NIOFS(ms)", "MMAP(ms)", "winner", "delta");
+        // Collect the lucene versions and jdks present in results.
+        TreeSet<String> luceneVersions = new TreeSet<>();
+        for (String key : table.keySet()) luceneVersions.add(key.split("\\|", -1)[0]);
+        String[] sections = {"indexing", "search"};
+        for (String lucene : luceneVersions) {
+            for (String section : sections) {
+                Map<String, BenchRecord> nioRow = table.get(lucene + "|NIOFSDirectory|" + section);
+                Map<String, BenchRecord> mmapRow = table.get(lucene + "|MMapDirectory|" + section);
+                if (nioRow == null || mmapRow == null) continue;
+                for (String jdk : jdkLabels) {
+                    BenchRecord n = nioRow.get(jdk);
+                    BenchRecord m = mmapRow.get(jdk);
+                    if (n == null || m == null) continue;
+                    String winner;
+                    double delta;
+                    if (n.avgMs < m.avgMs) {
+                        winner = "NIOFS";
+                        delta = (m.avgMs - n.avgMs) / m.avgMs * 100.0;
+                    } else {
+                        winner = "MMAP";
+                        delta = (n.avgMs - m.avgMs) / n.avgMs * 100.0;
+                    }
+                    System.out.printf(Locale.ROOT, "%-9s %-8s %-9s %12.3f %12.3f %-10s %7.1f%%%n",
+                            lucene, jdk, section, n.avgMs, m.avgMs, winner, delta);
+                }
+            }
+        }
         System.out.println();
         System.out.println(" Tip: re-run with a larger user count for steadier numbers.");
     }
